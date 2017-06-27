@@ -1,11 +1,20 @@
 # R script to run analyses for the Whitehall study II, by Vincent van Hees
-rm(list=ls())
+#rm(list=ls())
+
+
+options(echo=TRUE)
+args = commandArgs(TRUE)
+if(length(args) > 0) {
+  for (i in 1:length(args)) {
+    eval(parse(text = args[[i]]))
+  }
+}
 #==================================================================
 # INPUT NEEDED:
 # specify file number to start and end with, fill in c() if unknown
-f0 = c() #file to start with if used in serial analyses
-f1 = c() #file to end with if used in serial analyses (modify accordingly, if infinite then it will process until last file)
-mode= c(2,3,4,5) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
+#f0 = 1#c() #file to start with if used in serial analyses
+#f1 = 1#c() #file to end with if used in serial analyses (modify accordingly, if infinite then it will process until last file)
+mode= c(1) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
 #======================================================
 config = read.csv("config.txt",row.names = 1,stringsAsFactors = FALSE,sep = ",",strip.white = TRUE)
 datadir = config$datadir
