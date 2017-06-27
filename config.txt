@@ -1,0 +1,2 @@
+name, datadir, outputdir, studyname, dirR, loglocation
+"value", "/media/windows-share/London/whitehalldemo", "/media/windows-share/London", "whitehalldemo", "/home/vincent/GGIR/mcs-acc/R", "/media/windows-share/London/sleeplog_corrected_v5.csv"
