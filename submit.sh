@@ -1,5 +1,5 @@
 #! /bin/bash
-for i in {1..707}; do
+for i in {1..2}; do
     n=1
     s=$(($(($n * $[$i-1]))+1))
     e=$(($i * $n))
