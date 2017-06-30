@@ -5,6 +5,7 @@ if(length(args) > 0) {
     eval(parse(text = args[[i]]))
   }
 }
-
+print("step A")
 A = matrix(0,5,10)
-write.csv(A,paste0("/users/vv233/test",f0,"_",f1,".csv")
+print("step B")
+write.csv(A,paste0("/users/vv233/whitehall-acc/testbash/test",f0,"_",f1,".csv")
