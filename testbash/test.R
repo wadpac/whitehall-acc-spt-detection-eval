@@ -7,5 +7,5 @@ if(length(args) > 0) {
 }
 print("step A")
 A = matrix(0,5,10)
-print("step B")
-write.csv(A,paste0("/users/vv233/whitehall-acc/testbash/test",f0,"_",f1,".csv")
+print(A)
+write.csv(A,paste0("/users/vv233/whitehall-acc/testbash/test",f0,"_",f1,".csv"))
