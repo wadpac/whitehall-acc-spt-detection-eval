@@ -1,2 +1,2 @@
 name, datadir, outputdir, studyname, dirR, loglocation
-"value", "/data4/vv233", "~", "whitehall", "~/GGIR/R", "~/sleeplog_corrected_v5.csv"
+"value", "/data4/vv233", "~", "whitehall", "/users/vv233/GGIR/R", "/users/vv233/sleeplog_corrected_v5.csv"
