@@ -1,6 +1,6 @@
 # R script to run analyses for the Whitehall study II, by Vincent van Hees
 #rm(list=ls())
-
+.libPaths('/users/vv233/apps/R')
 
 options(echo=TRUE)
 args = commandArgs(TRUE)
@@ -9,6 +9,7 @@ if(length(args) > 0) {
     eval(parse(text = args[[i]]))
   }
 }
+
 #==================================================================
 # INPUT NEEDED:
 # specify file number to start and end with, fill in c() if unknown
@@ -16,7 +17,7 @@ if(length(args) > 0) {
 #f1 = 1#c() #file to end with if used in serial analyses (modify accordingly, if infinite then it will process until last file)
 mode= c(1) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
 #======================================================
-config = read.csv("config.txt",row.names = 1,stringsAsFactors = FALSE,sep = ",",strip.white = TRUE)
+config = read.csv("~/whitehall-acc/config.txt",row.names = 1,stringsAsFactors = FALSE,sep = ",",strip.white = TRUE)
 datadir = config$datadir
 outputdir = config$outputdir
 studyname = config$studyname
@@ -31,6 +32,15 @@ for (i in 1:length(ffnames)) {
   source(paste(dirR,"/",ffnames[i],sep="")) #loading scripts for reading geneactiv data
 }
 
+library("mmap")
+library("GENEAread")
+library("bitops")
+library("matlab")
+library("signal")
+library("tuneR")
+library("zoo")
+library("data.table")
+
 g.shell.GGIR(#=======================================
              # INPUT NEEDED:
               #-------------------------------
@@ -42,11 +52,11 @@ g.shell.GGIR(#=======================================
              studyname=studyname, #specify above
              f0=f0, #specify above
              f1=f1, #specify above
-             overwrite = TRUE, #overwrite previous milestone data?
+             overwrite = FALSE, #overwrite previous milestone data?
              do.imp=TRUE, # Do imputation? (recommended)
              idloc=2, #id location (1 = file header, 2 = filename)Rcpp::
              print.filename=TRUE,
-             storefolderstructure = FALSE,
+             storefolderstructure = TRUE,
              #-------------------------------
              # Part 1 parameters:
              #-------------------------------
@@ -54,8 +64,16 @@ g.shell.GGIR(#=======================================
              windowsizes = c(5,900,3600), #Epoch length, non-wear detection resolution, non-wear detection evaluation window
              do.cal= TRUE, # Apply autocalibration? (recommended)
              do.enmo = TRUE, #Needed for physical activity analysis
-             do.bfen = FALSE,
              do.anglez=TRUE, #Needed for sleep detection
+	     do.angley=TRUE,
+             do.anglex=TRUE,
+             do.roll_med_acc_x=TRUE,
+             do.roll_med_acc_y=TRUE,
+             do.roll_med_acc_z=TRUE,
+             do.dev_roll_med_acc_x=TRUE,
+             do.dev_roll_med_acc_y=TRUE,
+             do.dev_roll_med_acc_z=TRUE,
+
              chunksize=1, #size of data chunks to be read (value = 1 is maximum)
              printsummary=TRUE,
              #-------------------------------
@@ -71,14 +89,15 @@ g.shell.GGIR(#=======================================
              L5M5window = c(0,24), #window over which to calculate L5 and M5
              M5L5res = 10, #resolution in minutes of M5 and L5 calculation
              winhr = c(5,10), # size of M5 and L5 (5 hours by default)
-             qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c() if you do not want quantiles
+             
+qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c() if you do not want quantiles
              qwindow=c(0,24), #window over which to calculate quantiles
              ilevels = c(seq(0,400,by=50),8000), #acceleration values (metric ENMO) from which a frequency distribution needs to be derived, set value at c() if you do not want quantiles
              mvpathreshold =c(100,120), #MVPA (moderate and vigorous physical activity threshold
              bout.metric = 4,
              closedbout=FALSE,
              IVIS_windowsize_minutes = 60,
-             IVIS_epochsize_seconds = 30,
+             IVIS_epochsize_seconds = 3600,
              #-------------------------------
              # Part 3 parameters:
              #-------------------------------
@@ -122,7 +141,7 @@ g.shell.GGIR(#=======================================
              # Report generation
              #-------------------------------
              # Key functions: Generating reports based on meta-data
-             do.report=c(2,4,5), #for what parts does and report need to be generated? (option: 2, 4 and 5)
+             do.report=c(), #for what parts does and report need to be generated? (option: 2, 4 and 5)
              visualreport=FALSE,
              dofirstpage = TRUE, #first page of pdf-report with simple summary histograms
              viewingwindow=1) #viewingwindow of visual report: 1 centres at day and 2 centers at night
