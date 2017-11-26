@@ -2,13 +2,13 @@ rm(list=ls())
 graphics.off()
 
 # load the data
-path_algorithm = "/media/windows-share/Exeter/exeter_2aug/analysis_logFALSE_defnoc1"
-path_logaided = "/media/windows-share/Exeter/exeter_2aug/analysis_logTRUE_defnocempty"
-path_window = "/media/windows-share/Exeter/exeter_2aug/analysis_logFALSE_defnocempty"
+path_algorithm = "/media/vincent/Exeter/exeter_2aug/analysis_logFALSE_defnoc1"
+path_logaided = "/media/vincent/Exeter/exeter_2aug/analysis_logTRUE_defnocempty"
+path_window = "/media/vincent/Exeter/exeter_2aug/analysis_logFALSE_defnocempty"
 Dalg = read.csv(paste0(path_algorithm,"/part4_nightsummary_sleep_cleaned.csv"))
 Dlog = read.csv(paste0(path_logaided,"/part4_nightsummary_sleep_cleaned.csv"))
 Dwin = read.csv(paste0(path_window,"/part4_nightsummary_sleep_cleaned.csv"))
-demogra = read.csv("/media/windows-share/Exeter/whitehall_pp_characteristics.csv")
+demogra = read.csv("/media/vincent/Exeter/whitehall_pp_characteristics.csv")
 
 # compare and remove non-matching days and individual
 matchdata = function(x,y) {
@@ -80,18 +80,39 @@ Dlog = addseason(Dlog)
 Dlogwin = merge(Dlog,Dwin,by=c("id","night"),suffixes = c(".log",".win"))
 D = merge(Dlogwin,Dalg,by=c("id","night"))
 D = D[-which(D$acc_onset == 0 & D$acc_wake ==0),]
-data = data.frame(id = D$id, night=D$night,durerror_log = D$acc_timeinbed.log - D$sleeplog_timeinbed.log,
+data = data.frame(id = D$id, night=D$night,
+                  durerror_log = D$acc_timeinbed.log - D$sleeplog_timeinbed.log,
                   wakeerror_log = D$acc_wake.log - D$sleeplog_wake.log,
                   onseterror_log = D$acc_onset.log -  D$sleeplog_onset.log,
                   
                   durerror_win = D$acc_timeinbed.win - D$sleeplog_timeinbed.log,
                   wakeerror_win = D$acc_wake.win - D$sleeplog_wake.log,
                   onseterror_win = D$acc_onset.win -  D$sleeplog_onset.log,
-                  
+
                   durerror_alg = D$acc_timeinbed - D$sleeplog_timeinbed.log,
                   wakeerror_alg = D$acc_wake - D$sleeplog_wake.log,
                   onseterror_alg = D$acc_onset -  D$sleeplog_onset.log,
-                  weekhalf = D$weekhalf,season = D$season)
+                  weekhalf = D$weekhalf,season = D$season,
+                  
+                  dur_log = D$sleeplog_timeinbed.log,
+                  dur_win = D$acc_timeinbed.win,
+                  dur_alg = D$acc_timeinbed,
+                  
+                  onset_log = D$sleeplog_onset.log,
+                  onset_win = D$acc_onset.win,
+                  onset_alg = D$acc_onset,
+                  
+                  wake_log = D$sleeplog_wake.log,
+                  wake_win = D$acc_wake.win,
+                  wake_alg = D$acc_wake,
+                  
+                  sleepeff_log = D$acc_dur_noc.log / D$sleeplog_timeinbed.log,
+                  sleepeff_win = D$acc_dur_noc.win / D$acc_timeinbed.win,
+                  sleepeff_alg = D$acc_dur_noc / D$acc_timeinbed,
+                  
+                  n_noc_log = D$acc_n_noc.log,
+                  n_noc_win = D$acc_n_noc.win,
+                  n_noc_alg = D$acc_n_noc)
 
 #--------------------------
 # restructure data frame to only include relevant variables
@@ -110,7 +131,7 @@ data = data.frame(id = D$id, night=D$night,durerror_log = D$acc_timeinbed.log - 
 data = data[!duplicated(data[,1:6]),]
 modeldata = merge(x=data,y=demogra,by.x="id",by.y="STNO")
 modeldata$SEX = modeldata$SEX - 1 # 0 is men (N = 3552), 1 is women (N=1328)
-
+modeldata$BMI_uncorrected = modeldata$BMI
 modeldata$age = modeldata$age - mean(modeldata$age,na.rm=TRUE)
 modeldata$BMI = modeldata$BMI - mean(modeldata$BMI,na.rm=TRUE)
 
@@ -134,6 +155,8 @@ modeldata$durerror_alg = correct_morethan_24(modeldata$durerror_alg)
 modeldata$durerror_win = correct_morethan_24(modeldata$durerror_win)
 
 
+
+
 require(nlme)
 ctrl = lmeControl(opt="optim")
 
@@ -143,7 +166,7 @@ outputmatrix = matrix("",9,9)
 # x11()
 
 
-jpeg("/media/windows-share/Exeter/distributions_whitehall.jpeg",unit="in",res=400,width = 9,height=5)
+jpeg("/media/vincent/Exeter/distributions_whitehall.jpeg",unit="in",res=400,width = 9,height=5)
 par(mfrow=c(1,2))
 d1 = density(modeldata$onseterror_alg)
 d2 = density(modeldata$onseterror_win)
@@ -157,17 +180,22 @@ lines(d2,col="red",lend=2)
 legend("topright",legend = c("Algorithm","L5+12 window"),col=c("blue","red"),lty=c(1,1),cex=0.6)
 dev.off()
 
-for (domodel in "alg") { #c("log","alg","win")) { #
+
+d_expl_BMI = aggregate(modeldata,by = list(modeldata$id),mean)
+# cor.test(d_expl_BMI$sleepeff_alg, d_expl_BMI$BMI_uncorrected,na.rm=TRUE)
+kkkk
+
+for (domodel in c("log","alg","win"))  {# "win") {  #c("log","alg","win")) { #
   print("-----------------------------------")
   print(domodel)
   ndigits = 1
   getcoef = function(x,ndigits) {
     tmp = as.numeric(summary(x)$coefficients$fixed) * 60
-    tmp[3] = tmp[4] * 10
+    tmp[3] = tmp[3] * 10
     tmp[4] = tmp[4] * 5
     tmp = round(tmp,digits=ndigits)
     se = as.numeric(summary(x)$tTable[,2])  * 60
-    se[3] = se[4] * 10
+    se[3] = se[3] * 10
     se[4] = se[4] * 5
     se = round(se,digits=ndigits)
     tmp = paste(tmp,"(",se,")",sep="")
@@ -176,8 +204,6 @@ for (domodel in "alg") { #c("log","alg","win")) { #
     tmp = c(tmp,round(as.numeric(VarCorr(x)[5,2])*60,digits=ndigits))
     return(tmp)
   }
-  
-  
   if (domodel == "alg") {
     fit.dur = lme(durerror_alg ~ SEX + age + BMI + weekhalf + season, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
     fit.wake = lme(wakeerror_alg ~ SEX + age + BMI + weekhalf + season, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
@@ -203,8 +229,9 @@ for (domodel in "alg") { #c("log","alg","win")) { #
     sderror_wake = sd(modeldata$wakeerror_log)
     sderror_onset = sd(modeldata$onseterror_log)
   }
-  
-  
+  print(paste0("dur AIC ",AIC(fit.dur)," BIC ",BIC(fit.dur)))
+  print(paste0("onset AIC ",AIC(fit.onset)," BIC ",BIC(fit.onset)))
+  print(paste0("wake AIC ",AIC(fit.wake)," BIC ",BIC(fit.wake)))
   # x11()
   # d_error <- density(modeldata$onseterror_alg*60) # returns the density data
   # d_resi <- density(fit.onset$residuals*60) # returns the density data 
@@ -255,4 +282,4 @@ for (domodel in "alg") { #c("log","alg","win")) { #
   printsum2(fit.onset,ndigits)
 }
 
-write.csv(outputmatrix,file="/media/windows-share/Exeter/table_SEX.csv")
+write.csv(outputmatrix,file="/media/vincent/Exeter/table_SEX.csv")
