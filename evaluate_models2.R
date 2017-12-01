@@ -1,6 +1,8 @@
 rm(list=ls())
 graphics.off()
 
+include_auc_calculation = FALSE # takes 5 minutes
+
 # load the data
 path_algorithm = "/media/vincent/Exeter/exeter_2aug/analysis_logFALSE_defnoc1"
 path_logaided = "/media/vincent/Exeter/exeter_2aug/analysis_logTRUE_defnocempty"
@@ -135,6 +137,11 @@ modeldata$BMI_uncorrected = modeldata$BMI
 modeldata$age = modeldata$age - mean(modeldata$age,na.rm=TRUE)
 modeldata$BMI = modeldata$BMI - mean(modeldata$BMI,na.rm=TRUE)
 
+logincorrect = which(modeldata$wake_log < modeldata$onset_log)
+if (length(logincorrect) > 0) {
+  modeldata$wake_log[logincorrect] = modeldata$wake_log[logincorrect] + 24
+}
+
 correct_morethan_24 = function(x) {
   lessthan24 = which(x < -24)
   morethan24 = which(x > 24)
@@ -154,17 +161,37 @@ modeldata$wakeerror_win = correct_morethan_24(modeldata$wakeerror_win)
 modeldata$durerror_alg = correct_morethan_24(modeldata$durerror_alg)
 modeldata$durerror_win = correct_morethan_24(modeldata$durerror_win)
 
-
-
+if (include_auc_calculation == TRUE) {
+  # calculate auc
+  library(pROC)
+  calc_rocauc = function(x) {
+    Nepochs_hour = 60 # auc calculated with 1 minute resolution data to speed up calculations
+    i0 = min(x[1], x[3]) - 0.25 #start index
+    i1_est = round((x[2]-i0) * Nepochs_hour) #end index for est sleep relative to start index
+    i1_dia = round((x[4]-i0) * Nepochs_hour) #end index for diary sleep relative to start index
+    i1 = max(c(i1_est,i1_dia, 24*60))
+    rocdata = data.frame(est=rep(0,i1),dia=rep(0,i1))
+    rocdata$est[round((x[1]-i0)*Nepochs_hour):i1_est] = 1 # start index for est sleep relative to start : i1_est
+    rocdata$dia[round((x[3]-i0)*Nepochs_hour):i1_dia] = 1 # start index for diary sleep relative to start : i1_est
+    roccurve = roc(rocdata$dia ~ rocdata$est)
+    print(ci(roccurve))
+    return(auc(roccurve))
+  }
+  rocdata_alg = data.frame(v=modeldata$onset_alg, y=modeldata$wake_alg, z=modeldata$onset_log, w=modeldata$wake_log)
+  rocdata_win = data.frame(v=modeldata$onset_win, y=modeldata$wake_win, z=modeldata$onset_log, w=modeldata$wake_log)
+  t0 = Sys.time()
+  modeldata$auc_alg = apply(rocdata_alg,1,FUN=calc_rocauc)
+  t1 = Sys.time()
+  print(t1-t0)
+  modeldata$auc_win = apply(rocdata_win,1,FUN=calc_rocauc)
+  t2 = Sys.time()
+  print(t2-t1)
+}
 
 require(nlme)
 ctrl = lmeControl(opt="optim")
 
 outputmatrix = matrix("",9,9)
-# outputmatrix = matrix("",9,3)
-
-# x11()
-
 
 jpeg("/media/vincent/Exeter/distributions_whitehall.jpeg",unit="in",res=400,width = 9,height=5)
 par(mfrow=c(1,2))
@@ -172,18 +199,16 @@ d1 = density(modeldata$onseterror_alg)
 d2 = density(modeldata$onseterror_win)
 plot(d1,col="blue",xlim=c(-5,5),bty="l",main="Sleep onset",xlab="Difference with diary (hours)",lend=2)
 lines(d2,col="red",lend=2)
-legend("topright",legend = c("Algorithm","L5+12 window"),col=c("blue","red"),lty=c(1,1),cex=0.6)
+legend("topright",legend = c("Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 d1 = density(modeldata$wakeerror_alg)
 d2 = density(modeldata$wakeerror_win)
 plot(d1,col="blue",xlim=c(-5,5),bty="l",main="Waking up",xlab="Difference with diary (hours)",lend=2)
 lines(d2,col="red",lend=2)
-legend("topright",legend = c("Algorithm","L5+12 window"),col=c("blue","red"),lty=c(1,1),cex=0.6)
+legend("topright",legend = c("Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 dev.off()
 
 
-d_expl_BMI = aggregate(modeldata,by = list(modeldata$id),mean)
-# cor.test(d_expl_BMI$sleepeff_alg, d_expl_BMI$BMI_uncorrected,na.rm=TRUE)
-kkkk
+d_expl_BMI_auc = aggregate(modeldata,by = list(modeldata$id),mean)
 
 for (domodel in c("log","alg","win"))  {# "win") {  #c("log","alg","win")) { #
   print("-----------------------------------")
@@ -232,18 +257,7 @@ for (domodel in c("log","alg","win"))  {# "win") {  #c("log","alg","win")) { #
   print(paste0("dur AIC ",AIC(fit.dur)," BIC ",BIC(fit.dur)))
   print(paste0("onset AIC ",AIC(fit.onset)," BIC ",BIC(fit.onset)))
   print(paste0("wake AIC ",AIC(fit.wake)," BIC ",BIC(fit.wake)))
-  # x11()
-  # d_error <- density(modeldata$onseterror_alg*60) # returns the density data
-  # d_resi <- density(fit.onset$residuals*60) # returns the density data 
-  # plot(d_resi,col="black",lty=1,main=paste0(domodel," onset")) # plots the results
-  # lines(d_error,col="black",lty=2)
-  
-  # par(mfrow=c(1,2))
-  # RANGE = c(-300,300)
-  # hist(fit.onset$residuals*60,breaks=50,xlim=RANGE)
-  # hist(modeldata$onseterror_alg*60,breaks=50,xlim=RANGE)
-  
-  
+
   # if (domodel == "alg") {
   #   fit.dur = lme(durerror_alg ~ SEX, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
   #   fit.wake = lme(wakeerror_alg ~ SEX, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
@@ -267,6 +281,7 @@ for (domodel in c("log","alg","win"))  {# "win") {  #c("log","alg","win")) { #
   
   printsum2 = function(x,ndigits) {
     print(paste0("SD between", round(as.numeric(VarCorr(x)[4,2])*60,digits=ndigits)))
+    print(paste0("SD within", round(as.numeric(VarCorr(x)[5,2])*60,digits=ndigits)))
     print(summary(x)$coefficients$fixed)
     tmp = as.numeric(summary(x)$coefficients$fixed) * 60
     tmp[3] = tmp[4] * 10
@@ -282,4 +297,4 @@ for (domodel in c("log","alg","win"))  {# "win") {  #c("log","alg","win")) { #
   printsum2(fit.onset,ndigits)
 }
 
-write.csv(outputmatrix,file="/media/vincent/Exeter/table_SEX.csv")
+write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv")
