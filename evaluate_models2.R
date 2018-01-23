@@ -209,7 +209,7 @@ plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Sleep d
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.6)
 lines(d2,col="red",lend=2)
 addLoAdots(xy1=modeldata$durerror_alg,xy2=modeldata$durerror_win,d1,d2)
-legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
+legend("topright",legend = c("HDCZA","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 #-----------------------------
 d1 = density(modeldata$onseterror_alg)
 d2 = density(modeldata$onseterror_win)
@@ -217,7 +217,7 @@ plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Sleep o
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.5)
 lines(d2,col="red",lend=2)
 addLoAdots(xy1=modeldata$onseterror_alg,xy2=modeldata$onseterror_win,d1,d2)
-legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
+legend("topright",legend = c("HDCZA","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 #-----------------------------
 d1 = density(modeldata$wakeerror_alg)
 d2 = density(modeldata$wakeerror_win)
@@ -225,11 +225,11 @@ plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Waking 
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.6)
 lines(d2,col="red",lend=2)
 addLoAdots(xy1=modeldata$wakeerror_alg,xy2=modeldata$wakeerror_win,d1,d2)
-legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
+legend("topright",legend = c("HDCZA","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 dev.off()
 
 
-jkkk
+
 # investigate wake duration in relation to error in the estimation of SPT-window duration
 modeldata$awakeduration = modeldata$dur_log * (1-modeldata$sleepeff_log)
 fit.wakeduration_alg = lme(durerror_alg ~ awakeduration, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
@@ -302,5 +302,8 @@ for (domodel in c("alg", "win"))  {# "win") {  #c("log","alg","win")) { #
   print(">>>>>>>>>>>>>>> onset time")
   printsum2(fit.onset,ndigits)
 }
+
+
+char_of_finalsample = d_expl_BMI_auc[which(is.na(d_expl_BMI_auc$age) == FALSE & is.na(d_expl_BMI_auc$BMI_uncorrected) == FALSE),]
 
 write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv")
