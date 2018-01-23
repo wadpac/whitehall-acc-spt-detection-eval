@@ -189,30 +189,47 @@ if (include_auc_calculation == TRUE) {
 require(nlme)
 ctrl = lmeControl(opt="optim")
 
+addLoAdots = function(xy1,xy2,d1,d2) {
+  LoA = quantile(xy1,probs=c(0.05,0.25,0.75,0.95))
+  for (i in 1:length(LoA)) {
+    lines(x=LoA[i], y=d1$y[which.min(abs(d1$x - LoA[i]))],col="blue",type="p",pch=20,cex=0.9)
+  }
+  LoA = quantile(xy2,probs=c(0.05,0.25,0.75,0.95))
+  for (i in 1:length(LoA)) {
+    lines(x=LoA[i], y=d2$y[which.min(abs(d2$x - LoA[i]))],col="red",type="p",pch=20,cex=0.9)
+  }
+}
+
 outputmatrix = matrix("",9,9)
 jpeg("/media/vincent/Exeter/Figure1.jpeg",unit="in",res=600,width = 7,height=3)
-par(mfrow=c(1,3))
+par(mfrow=c(1,3),mar=c(5,4,2,1))
 d1 = density(modeldata$durerror_alg)
 d2 = density(modeldata$durerror_win)
 plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Sleep duration",xlab="Difference with diary (hours)",lend=2,
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.6)
 lines(d2,col="red",lend=2)
+addLoAdots(xy1=modeldata$durerror_alg,xy2=modeldata$durerror_win,d1,d2)
 legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
+#-----------------------------
 d1 = density(modeldata$onseterror_alg)
 d2 = density(modeldata$onseterror_win)
-par(mar=c(5,4,2,1))
 plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Sleep onset",xlab="Difference with diary (hours)",lend=2,
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.5)
 lines(d2,col="red",lend=2)
+addLoAdots(xy1=modeldata$onseterror_alg,xy2=modeldata$onseterror_win,d1,d2)
 legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
+#-----------------------------
 d1 = density(modeldata$wakeerror_alg)
 d2 = density(modeldata$wakeerror_win)
 plot(d1,col="blue",ylim=range(d1$y)*c(1,1.25),xlim=c(-5,5),bty="l",main="Waking up",xlab="Difference with diary (hours)",lend=2,
      lab.cex=0.5,main.cex=0.6,axis.cex=0.5,cex=0.6)
 lines(d2,col="red",lend=2)
+addLoAdots(xy1=modeldata$wakeerror_alg,xy2=modeldata$wakeerror_win,d1,d2)
 legend("topright",legend = c("Heuristic Algorithm","L5+/-6"),col=c("blue","red"),lty=c(1,1),cex=0.8)
 dev.off()
 
+
+jkkk
 # investigate wake duration in relation to error in the estimation of SPT-window duration
 modeldata$awakeduration = modeldata$dur_log * (1-modeldata$sleepeff_log)
 fit.wakeduration_alg = lme(durerror_alg ~ awakeduration, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
