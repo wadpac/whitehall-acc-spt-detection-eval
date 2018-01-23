@@ -1,4 +1,5 @@
 # Code related to the analyses of sleep diary and accelerometer data in the Whitehall study II
+See for more information [insert reference to paper].
 
 ## call_GGIRshell.R
 
