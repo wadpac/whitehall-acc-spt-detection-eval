@@ -309,6 +309,4 @@ print(cor.test(d_expl_BMI_auc$dur_l5hr6,d_expl_BMI_auc$dur_logaided))
 
 char_of_finalsample = d_expl_BMI_auc[which(is.na(d_expl_BMI_auc$age) == FALSE & is.na(d_expl_BMI_auc$BMI_uncorrected) == FALSE),]
 
-
-
 write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv")
