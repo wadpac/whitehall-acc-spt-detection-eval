@@ -105,6 +105,8 @@ qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c(
              timethreshold= c(5), #10
              anglethreshold=5,
              ignorenonwear = TRUE, # if TRUE non-wear is not detected as sleep (if FALSE then it will work with imputed data)
+	     constrain2range = TRUE,
+	     do.part3.pdf = FALSE,
              #-------------------------------
              # Part 4 parameters:
              #-------------------------------
