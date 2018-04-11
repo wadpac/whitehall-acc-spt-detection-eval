@@ -1,5 +1,4 @@
 # R script to run analyses for the Whitehall study II, by Vincent van Hees
-#rm(list=ls())
 .libPaths('/users/vv233/apps/R')
 
 options(echo=TRUE)
@@ -13,10 +12,8 @@ if(length(args) > 0) {
 #==================================================================
 # INPUT NEEDED:
 # specify file number to start and end with, fill in c() if unknown
-#f0 = 1#c() #file to start with if used in serial analyses
-#f1 = 1#c() #file to end with if used in serial analyses (modify accordingly, if infinite then it will process until last file)
 mode= c(1) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
-#======================================================
+# specifiy the location of the config file:
 config = read.csv("~/whitehall-acc/config.txt",row.names = 1,stringsAsFactors = FALSE,sep = ",",strip.white = TRUE)
 datadir = config$datadir
 outputdir = config$outputdir
@@ -25,7 +22,6 @@ dirR = config$dirR
 loglocation = config$loglocation
 
 #=====================================================================================
-# library(GGIR)
 # load functions directly from local clone of the R package repository
 ffnames = dir(dirR) # creating list of filenames of scriptfiles to load
 for (i in 1:length(ffnames)) {
@@ -65,7 +61,7 @@ g.shell.GGIR(#=======================================
              do.cal= TRUE, # Apply autocalibration? (recommended)
              do.enmo = TRUE, #Needed for physical activity analysis
              do.anglez=TRUE, #Needed for sleep detection
-	     do.angley=TRUE,
+      	     do.angley=TRUE,
              do.anglex=TRUE,
              do.roll_med_acc_x=TRUE,
              do.roll_med_acc_y=TRUE,
