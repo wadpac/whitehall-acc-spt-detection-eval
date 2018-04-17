@@ -9,11 +9,15 @@ graphics.off()
 # USER INPUT NEEDED:
 
 # the new algorithm (hdcza)
-path_hdcza = "/media/vincent/Exeter/exeter_2aug/analysis_logFALSE_defnoc1"
+
+# datapath = "/media/vincent/Exeter/exeter_2aug2017"
+datapath = "/media/vincent/Exeter/exeter_11apr2018"
+
+path_hdcza = paste0(datapath,"/analysis_logFALSE_defnoc1")
 # SPT-window detection as described in the 2015 PLoSONE paper, van Hees, Sabia, et al.
-path_logaided = "/media/vincent/Exeter/exeter_2aug/analysis_logTRUE_defnocempty" #<= not used in paper
+path_logaided = paste0(datapath,"/analysis_logTRUE_defnocempty") #<= not used in paper
 # the L5+6 approach
-path_l5hr6 = "/media/vincent/Exeter/exeter_2aug/analysis_logFALSE_defnocempty"
+path_l5hr6 = paste0(datapath,"/analysis_logFALSE_defnocempty")
 
 # path to demographic data file
 path_demogra = "/media/vincent/Exeter/whitehall_pp_characteristics.csv"
@@ -95,6 +99,31 @@ Dlogaided = addseason(Dlogaided)
 # merge the three data frames
 Dlogaidedl5hr6 = merge(Dlogaided,Dl5hr6,by=c("id","night"),suffixes = c(".logaided",".l5hr6"))
 D = merge(Dlogaidedl5hr6,Dhdcza,by=c("id","night"))
+
+# #=================
+# # Temporary code to generate new release of Whitehall data (ideally the above data cleaning should happen in GGIR,
+# # but somehow this was not working yet
+# D_newrelease = Dlogaided[-which(Dlogaided$acc_onset == 0 & Dlogaided$acc_wake ==0),]
+# 
+# removeimplausable = which(D_newrelease$acc_dur_noc > D_newrelease$acc_timeinbed | D_newrelease$acc_dur_noc.logaided > D_newrelease$acc_timeinbed.logaided | D_newrelease$acc_dur_noc.l5hr6 > D_newrelease$acc_timeinbed.l5hr6)
+# if (length(removeimplausable) > 0) {
+#   D_newrelease = D_newrelease[-removeimplausable,]
+# }
+# # correct 24 hour shifts in sleeplog data
+# logincorrect2 = which(D_newrelease$sleeplog_wake < D_newrelease$sleeplog_onset)
+# logincorrect2.logaided = which(D_newrelease$sleeplog_wake.logaided< D_newrelease$sleeplog_onset.logaided)
+# if (length(logincorrect2) > 0) D_newrelease$sleeplog_wake[logincorrect2] = D_newrelease$sleeplog_wake[logincorrect2] + 24
+# if (length(logincorrect2.logaided) > 0) D_newrelease$sleeplog_wake.logaided[logincorrect2.logaided] = D_newrelease$sleeplog_wake.logaided[logincorrect2.logaided] + 24
+# 
+# D_newrelease_aggr = aggregate(D_newrelease,by = list(D_newrelease$id),mean)
+# D_newrelease_aggr = D_newrelease_aggr[,!names(D_newrelease_aggr) %in% c("Group.1","NA.","NA..1")]
+# D_newrelease = D_newrelease[,!names(D_newrelease) %in% c("NA.","NA..1")]
+# write.csv(D_newrelease_aggr,"/media/vincent/London/newrelease_part4_summary.csv",row.names = FALSE)
+# write.csv(D_newrelease,"/media/vincent/London/newrelease_part4_nightsummary.csv",row.names = FALSE)
+# 
+# kkkk
+# #============================
+
 D = D[-which(D$acc_onset == 0 & D$acc_wake ==0),]
 # remove individuals with more nocturnal sleep than the lengths of the SPT window (should not happen)
 removeimplausable = which(D$acc_dur_noc > D$acc_timeinbed | D$acc_dur_noc.logaided > D$acc_timeinbed.logaided | D$acc_dur_noc.l5hr6 > D$acc_timeinbed.l5hr6)
@@ -296,17 +325,68 @@ modeldata$wakeerror_hdcza_abs = abs(modeldata$wakeerror_hdcza) # calculate absol
 modeldata$onseterror_hdcza_abs = abs(modeldata$onseterror_hdcza) # calculate absolute error in onset time per night
 modeldata_mae = aggregate(modeldata,by = list(modeldata$id),mean) # aggregate both wake and onset per person
 MAE = round(mean(c(modeldata$wakeerror_hdcza_abs,modeldata$onseterror_hdcza_abs)),digits=3) # calcualte mean acros individuals.
-print(paste0("MAE = ", MAE * 60))
+print(paste0("MAE hdcza = ", MAE * 60))
 
+modeldata$wakeerror_l5hr6_abs = abs(modeldata$wakeerror_l5hr6) # calculate absolute error in wake time per night
+modeldata$onseterror_l5hr6_abs = abs(modeldata$onseterror_l5hr6) # calculate absolute error in onset time per night
+modeldata_mae = aggregate(modeldata,by = list(modeldata$id),mean) # aggregate both wake and onset per person
+MAE = round(mean(c(modeldata$wakeerror_l5hr6_abs,modeldata$onseterror_l5hr6_abs)),digits=3) # calcualte mean acros individuals.
+print(paste0("MAE l5hr6 = ", MAE * 60))
 
-print("Correlations table 3")
-print(cor.test(d_expl_BMI_auc$wake_hdcza,d_expl_BMI_auc$wake_logaided,paired=TRUE))
-print(cor.test(d_expl_BMI_auc$onset_hdcza,d_expl_BMI_auc$onset_logaided,paired=TRUE))
-print(cor.test(d_expl_BMI_auc$dur_hdcza,d_expl_BMI_auc$dur_logaided))
-print(cor.test(d_expl_BMI_auc$wake_l5hr6,d_expl_BMI_auc$wake_logaided,paired=TRUE))
-print(cor.test(d_expl_BMI_auc$onset_l5hr6,d_expl_BMI_auc$onset_logaided,paired=TRUE))
-print(cor.test(d_expl_BMI_auc$dur_l5hr6,d_expl_BMI_auc$dur_logaided))
 
 char_of_finalsample = d_expl_BMI_auc[which(is.na(d_expl_BMI_auc$age) == FALSE & is.na(d_expl_BMI_auc$BMI_uncorrected) == FALSE),]
+##=====================================
+## TABLE 2
+# reorder matrix because that is how we now format the table for the paper
+outputmatrix = t(outputmatrix)[,c(8,5,2,1,9,6,3)]
+outputmatrix[7:8,] = outputmatrix[8:7,]
+outputmatrix[9,] = round(as.numeric(outputmatrix[9,]))
+write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv",row.names = FALSE)
 
-write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv")
+##=====================================
+## TABLE 3
+TABLE3 = matrix("",8,6)
+T3_onset_hdcza = cor.test(d_expl_BMI_auc$onset_hdcza,d_expl_BMI_auc$onset_logaided,paired=TRUE)
+T3_wake_hdcza = cor.test(d_expl_BMI_auc$wake_hdcza,d_expl_BMI_auc$wake_logaided,paired=TRUE)
+T3_dur_hdcza = cor.test(d_expl_BMI_auc$dur_hdcza,d_expl_BMI_auc$dur_logaided)
+T3_onset_l5hr6 = cor.test(d_expl_BMI_auc$onset_l5hr6,d_expl_BMI_auc$onset_logaided,paired=TRUE)
+T3_wake_l5hr6 = cor.test(d_expl_BMI_auc$wake_l5hr6,d_expl_BMI_auc$wake_logaided,paired=TRUE)
+T3_dur_l5hr6 = cor.test(d_expl_BMI_auc$dur_l5hr6,d_expl_BMI_auc$dur_logaided)
+
+filltable3 = function(rowid,colids,corobject,TABLE3) {
+  TABLE3[rowid,colids[1]] = paste0(round(corobject$estimate,digits=2)," (95% CI: ",round(corobject$conf.int[1],digits=2)," - ",round(corobject$conf.int[2],digits=2),")")
+  TABLE3[rowid,colids[2]] = paste0(round(corobject$statistic,digits=0),"; ",corobject$parameter) #t statistic and df
+  if (corobject$p.value < 0.0005) {
+    TABLE3[rowid,colids[3]] = "**"
+  } else if (corobject$p.value < 0.005) {
+    TABLE3[rowid,colids[3]] = "*"
+  } else if (corobject$p.value >= 0.005) {
+    TABLE3[rowid,colids[3]] = round(corobject$p.value,digits=3)
+  }
+  return(TABLE3)
+}
+TABLE3 = filltable3(rowid=1,colids=1:3,T3_onset_hdcza,TABLE3)
+TABLE3[2,1] = round(mean(modeldata_mae$onseterror_hdcza_abs) * 60,digits=1)
+TABLE3 = filltable3(rowid=3,colids=1:3,T3_wake_hdcza,TABLE3)
+TABLE3[4,1] = round(mean(modeldata_mae$wakeerror_hdcza_abs) * 60,digits=1)
+TABLE3 = filltable3(rowid=5,colids=1:3,T3_dur_hdcza,TABLE3)
+TABLE3[6,1] = round(mean(modeldata_mae$durerror_hdcza) * 60,digits=1)
+TABLE3 = filltable3(rowid=1,colids=4:6,T3_onset_l5hr6,TABLE3)
+TABLE3[2,4] = round(mean(modeldata_mae$onseterror_l5hr6_abs) * 60,digits=1)
+TABLE3 = filltable3(rowid=3,colids=4:6,T3_wake_l5hr6,TABLE3)
+TABLE3[4,4] = round(mean(modeldata_mae$wakeerror_l5hr6_abs) * 60,digits=1)
+TABLE3 = filltable3(rowid=5,colids=4:6,T3_dur_l5hr6,TABLE3)
+TABLE3[6,4] = round(mean(modeldata_mae$durerror_l5hr6) * 60,digits=1)
+if (include_auc_calculation == TRUE) {
+  qqauc = round(quantile(modeldata_mae$auc_hdcza,probs = c(0.25,0.75)),digits=2)
+  TABLE3[7,1] = paste0(round(mean(modeldata_mae$auc_hdcza),digits=2)," (IQR: ",qqauc[1]," = ",qqauc[2],")")
+  qqauc = round(quantile(modeldata_mae$auc_l5hr6,probs = c(0.25,0.75)),digits=2)
+  TABLE3[7,4] = paste0(round(mean(modeldata_mae$auc_l5hr6),digits=2)," (IQR: ",qqauc[1]," = ",qqauc[2],")")
+  ttestobject = t.test(modeldata_mae$auc_l5hr6,modeldata_mae$auc_hdcza,paired=TRUE)
+  TABLE3[8,1] = paste0(round(ttestobject$estimate,digits=2)," difference (95% CI for difference: ",
+                           round(ttestobject$conf.int[1],digits=3),"; ",
+                           round(ttestobject$conf.int[2],digits=3),"), t=",
+                           round(ttestobject$statistic,digits=0),", DF=",
+                          ttestobject$parameter," P=", round(ttestobject$p.value,digits=4))
+}
+write.csv(TABLE3,file="/media/vincent/Exeter/table_3.csv",row.names = FALSE)
