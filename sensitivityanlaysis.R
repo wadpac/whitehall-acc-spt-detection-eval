@@ -13,11 +13,11 @@ extract_i_id = function(x) {
 
 D = sapply(foldernames,FUN=extract_i_id)
 FS = data.frame(id=as.numeric(unlist(D)),foldername=names(D))
-
 FS = FS[-which(FS$id == -1),]
 FS$foldername = as.character(unlist(strsplit(as.character(FS$foldername),"[.]id")))
 
-FS = FS[-which(FS$id >= 1 | FS$id <= 6),]
+FS = FS[-which(FS$id >= 0 &
+                 FS$id <= 6 | FS$id >= 8),]
 
 FS = FS[order(FS$id),]
 
@@ -29,6 +29,7 @@ for (i in 1:length(ffnames)) {
 
 # loop over all ms3.out folders
 for (i in 1:nrow(FS)) {
+  print(paste0("row",i," id: ",FS[i,1]," foldername: ",FS[i,2]))
   #   change the ms3.out for one folder
   file.rename(from = paste0(pathM,"/",FS$foldername[i]), to = paste0(pathM,"/ms3.out"))
   
