@@ -10,8 +10,8 @@ for (i in 1:30) {
   A[i+1,3] = round(runif(n = 1,min = 15,max= 45),digits=0)
   A[i+1,4] = round(runif(n = 1,min = 30,max= 90),digits=0)
 }
-plotname = c("whitehall","psgncl_left","psgncl_right","penn")
-for (ploti in 1:4) {
+plotname = c("whitehall","psgncl_left","psgncl_right","penn","combined")
+for (ploti in 1:5) {
   if (ploti == 1) {
     senan_out = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
     senan_out[,2] = senan_out[,2] * 60
@@ -23,16 +23,18 @@ for (ploti in 1:4) {
     senan_out =  senan_out[,-3]
   } else if (ploti == 4) { 
     senan_out = read.csv("/media/vincent/Exeter/psg_penn_sensitivity_analysis.csv")
-  
-    # senan_out[,2] = senan_out[,ploti]
-    # senan_out =  senan_out[,-3]
+  } else if (ploti == 5) { 
+    whiteh = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
+    whiteh[,2] = whiteh[,2] * 60
+    nclpsg = read.csv("/media/vincent/Exeter/psg_newcastle_sensitivity_analysis.csv")
+    nclpsg[,2] = (nclpsg[,2] + nclpsg[,3]) / 2
+    nclpsg = nclpsg[,-3]
+    pennpsg = read.csv("/media/vincent/Exeter/psg_penn_sensitivity_analysis.csv")
+    senan_out = pennpsg
+    senan_out[,2] = (whiteh[,2] + nclpsg[,2] + pennpsg[,2]) / 3
   }
   
-  
-  
-  
   senan_out = cbind(senan_out,A)
-  
   colnames(senan_out) = c("id","MAE","percentage","threshold","shortW","longW")
   
   NAi = which(is.na(senan_out$MAE) == TRUE)
@@ -46,11 +48,12 @@ for (ploti in 1:4) {
   CXD = 2
   CXA = 1.8
   
-  png(filename = paste0("/media/vincent/Exeter/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),width = 5,height=5,units = "in",res = 600)
+  png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),width = 5,height=5,units = "in",res = 600)
   par(mfrow=c(5,1),mar=c(1.5,5,1,2.5), oma=c(0,0,1,0),font.lab = 2,cex.axis=0.8,las=2)
   miny = floor(min(senan_out$MAE)/10)*10
   maxy = ceiling(max(senan_out$MAE)/10)*10
-  YY = seq(miny,maxy,by=round((maxy-miny)/4))
+  # Ngroups = floor(abs(diff(range(senan_out$MAE))) / 10)
+  YY = seq(miny,maxy,by=round((maxy-miny)/5))
   plot(0:30,senan_out$MAE,type="p",pch=20,axes=FALSE,xlab="",ylab="MAE (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
   axis(side = 1,at = 0:30,labels = senan_out$id,tick = TRUE,las=2)
