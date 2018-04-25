@@ -9,10 +9,7 @@ graphics.off()
 # USER INPUT NEEDED:
 
 # the new algorithm (hdcza)
-
-# datapath = "/media/vincent/Exeter/exeter_2aug2017"
 datapath = "/media/vincent/Exeter/exeter_11apr2018"
-
 path_hdcza = paste0(datapath,"/analysis_logFALSE_defnoc1")
 # SPT-window detection as described in the 2015 PLoSONE paper, van Hees, Sabia, et al.
 path_logaided = paste0(datapath,"/analysis_logTRUE_defnocempty") #<= not used in paper
@@ -22,7 +19,7 @@ path_l5hr6 = paste0(datapath,"/analysis_logFALSE_defnocempty")
 # path to demographic data file
 path_demogra = "/media/vincent/Exeter/whitehall_pp_characteristics.csv"
 # whether or not to do the auc calculation (can take 5 mintues)
-include_auc_calculation = FALSE
+include_auc_calculation = TRUE
 
 # Disclaimer: The term timeined bed is used in this script, which actually refers to the SPT-window
 #=================================
@@ -63,15 +60,7 @@ Dl5hr6 = md$y
 md = matchdata(Dlogaided,Dl5hr6)
 Dlogaided = md$x
 Dl5hr6 = md$y
-# check that waking up times are not wrong by 24 hours and fix if so
-fixwakingtime = function(x) {
-  x$acc_wake[which(x$acc_wake < x$acc_onset)] = x$acc_wake[which(x$acc_wake < x$acc_onset)] + 24
-  x$log_wake[which(x$log_wake < x$log_onset)] = x$log_wake[which(x$log_wake < x$log_onset)] + 24
-  return(x)
-}
-Dhdcza = fixwakingtime(Dhdcza)
-Dl5hr6 = fixwakingtime(Dl5hr6)
-Dlogaided = fixwakingtime(Dlogaided)
+
 # only keep nights with less than 33% indivalid data
 removeinvalid =  function(x) x[which(x$fraction_night_invalid < 0.33),]
 Dhdcza = removeinvalid(Dhdcza)
@@ -99,41 +88,9 @@ Dlogaided = addseason(Dlogaided)
 # merge the three data frames
 Dlogaidedl5hr6 = merge(Dlogaided,Dl5hr6,by=c("id","night"),suffixes = c(".logaided",".l5hr6"))
 D = merge(Dlogaidedl5hr6,Dhdcza,by=c("id","night"))
-
-# #=================
-# # Temporary code to generate new release of Whitehall data (ideally the above data cleaning should happen in GGIR,
-# # but somehow this was not working yet
-# D_newrelease = Dlogaided[-which(Dlogaided$acc_onset == 0 & Dlogaided$acc_wake ==0),]
-# 
-# removeimplausable = which(D_newrelease$acc_dur_noc > D_newrelease$acc_timeinbed | D_newrelease$acc_dur_noc.logaided > D_newrelease$acc_timeinbed.logaided | D_newrelease$acc_dur_noc.l5hr6 > D_newrelease$acc_timeinbed.l5hr6)
-# if (length(removeimplausable) > 0) {
-#   D_newrelease = D_newrelease[-removeimplausable,]
-# }
-# # correct 24 hour shifts in sleeplog data
-# logincorrect2 = which(D_newrelease$sleeplog_wake < D_newrelease$sleeplog_onset)
-# logincorrect2.logaided = which(D_newrelease$sleeplog_wake.logaided< D_newrelease$sleeplog_onset.logaided)
-# if (length(logincorrect2) > 0) D_newrelease$sleeplog_wake[logincorrect2] = D_newrelease$sleeplog_wake[logincorrect2] + 24
-# if (length(logincorrect2.logaided) > 0) D_newrelease$sleeplog_wake.logaided[logincorrect2.logaided] = D_newrelease$sleeplog_wake.logaided[logincorrect2.logaided] + 24
-# 
-# D_newrelease_aggr = aggregate(D_newrelease,by = list(D_newrelease$id),mean)
-# D_newrelease_aggr = D_newrelease_aggr[,!names(D_newrelease_aggr) %in% c("Group.1","NA.","NA..1")]
-# D_newrelease = D_newrelease[,!names(D_newrelease) %in% c("NA.","NA..1")]
-# write.csv(D_newrelease_aggr,"/media/vincent/London/newrelease_part4_summary.csv",row.names = FALSE)
-# write.csv(D_newrelease,"/media/vincent/London/newrelease_part4_nightsummary.csv",row.names = FALSE)
-# 
-# kkkk
-# #============================
-
 D = D[-which(D$acc_onset == 0 & D$acc_wake ==0),]
-# remove individuals with more nocturnal sleep than the lengths of the SPT window (should not happen)
-removeimplausable = which(D$acc_dur_noc > D$acc_timeinbed | D$acc_dur_noc.logaided > D$acc_timeinbed.logaided | D$acc_dur_noc.l5hr6 > D$acc_timeinbed.l5hr6)
-if (length(removeimplausable) > 0) {
-  D = D[-removeimplausable,]
-}
 # correct 24 hour shifts in sleeplog data
-logincorrect2 = which(D$sleeplog_wake < D$sleeplog_onset)
 logincorrect2.logaided = which(D$sleeplog_wake.logaided< D$sleeplog_onset.logaided)
-if (length(logincorrect2) > 0) D$sleeplog_wake[logincorrect2] = D$sleeplog_wake[logincorrect2] + 24
 if (length(logincorrect2.logaided) > 0) D$sleeplog_wake.logaided[logincorrect2.logaided] = D$sleeplog_wake.logaided[logincorrect2.logaided] + 24
 # put relevant variables in a new dataframe
 data = data.frame(id = D$id, night=D$night,
@@ -157,8 +114,6 @@ data = data.frame(id = D$id, night=D$night,
                   dur_logaided = D$sleeplog_timeinbed.logaided, 
                   sleepeff_logaided = D$acc_dur_noc.logaided / D$acc_timeinbed.logaided)
 
-# remove duplicated rows to speed up analysis (not really needed, but good to check anyway)
-data = data[!duplicated(data[,1:2]),]
 # merge data with demographic data to get dataframe for regression model
 modeldata = merge(x=data,y=demogra,by.x="id",by.y="STNO")
 modeldata$SEX = modeldata$SEX - 1 # 0 is men (N = 3552), 1 is women (N=1328)
@@ -166,6 +121,11 @@ modeldata$BMI_uncorrected = modeldata$BMI
 modeldata$age_uncorrected = modeldata$age
 modeldata$age = modeldata$age - mean(modeldata$age,na.rm=TRUE)
 modeldata$BMI = modeldata$BMI - mean(modeldata$BMI,na.rm=TRUE)
+
+# extract sample sizes
+Ncompletenights = length(complete.cases(modeldata[,c("BMI","age","SEX","durerror_hdcza")]))
+Ncompletepersons = length(unique(modeldata$id[complete.cases(modeldata[,c("BMI","age","SEX","durerror_hdcza")])]))
+modeldata = modeldata[complete.cases(modeldata[,c("BMI","age","SEX")]),]
 
 
 correct_morethan_24 = function(x) {
@@ -186,8 +146,9 @@ modeldata$wakeerror_l5hr6 = correct_morethan_24(modeldata$wakeerror_l5hr6)
 modeldata$durerror_hdcza = correct_morethan_24(modeldata$durerror_hdcza)
 modeldata$durerror_l5hr6 = correct_morethan_24(modeldata$durerror_l5hr6)
 
-print("AUC")
+
 if (include_auc_calculation == TRUE) {
+  print("AUC")
   # calculate auc
   library(pROC)
   calc_rocauc = function(x) {
@@ -225,7 +186,7 @@ addLoAdots = function(xy1,xy2,d1,d2) {
   }
 }
 print("Figure 2")
-outputmatrix = matrix("",9,9)
+TABLE2 = matrix("",9,9)
 jpeg("/media/vincent/Exeter/Figure2.jpeg",unit="in",res=600,width = 7,height=3)
 par(mfrow=c(1,3),mar=c(5,4,2,1))
 d1 = density(modeldata$durerror_hdcza)
@@ -254,13 +215,43 @@ legend("topright",legend = c("HDCZA","L5+/-6"),col=c("blue","red"),lty=c(1,1),ce
 dev.off()
 
 
-
 # investigate wake duration in relation to error in the estimation of SPT-window duration
+print("Investigate wake duration in relation to error in estimation of SPT-window duration")
 modeldata$awakeduration = modeldata$dur_logaided * (1-modeldata$sleepeff_logaided)
 fit.wakeduration_hdcza = lme(durerror_hdcza ~ awakeduration, random = ~1|night/id,data=modeldata,control=ctrl,na.action = na.omit)
 
+wakedur_by_durerror = matrix(0,5,3)
+wie = which(modeldata$awakeduration >= 0 & modeldata$awakeduration < 1)
+wakedur_by_durerror[1,1] = round(mean(modeldata$durerror_hdcza[wie])*60,digits=0)
+wakedur_by_durerror[1,3] = length(wie)
+wie = which(modeldata$awakeduration >= 1 & modeldata$awakeduration < 2)
+wakedur_by_durerror[2,1] = round(mean(modeldata$durerror_hdcza[wie])*60,digits=0)
+wakedur_by_durerror[2,3] = length(wie)
+wie = which(modeldata$awakeduration >= 2 & modeldata$awakeduration < 3)
+wakedur_by_durerror[3,1] = round(mean(modeldata$durerror_hdcza[wie])*60,digits=0)
+wakedur_by_durerror[3,3] = length(wie)
+wie = which(modeldata$awakeduration >= 3 & modeldata$awakeduration < 4)
+wakedur_by_durerror[4,1] = round(mean(modeldata$durerror_hdcza[wie])*60,digits=0)
+wakedur_by_durerror[4,3] = length(wie)
+wie = which(modeldata$awakeduration >= 4)
+wakedur_by_durerror[5,1] = round(mean(modeldata$durerror_hdcza[wie])*60,digits=0)
+wakedur_by_durerror[5,3] = length(wie)
+print(paste0("0-1: ",wakedur_by_durerror[1,1]))
+print(paste0("1-2: ",wakedur_by_durerror[2,1]))
+print(paste0("2-3: ",wakedur_by_durerror[3,1]))
+print(paste0("3-4: ",wakedur_by_durerror[4,1]))
+print(paste0(">4: ",wakedur_by_durerror[5,1]))
+RatioPersonsWithAtLeast3HoursOfWakefulness = length(unique(modeldata$id[which(modeldata$awakeduration >= 3)])) /
+        length(unique(modeldata$id))
+wakedur_by_durerror[,2] = round((wakedur_by_durerror[,3] / nrow(modeldata)) * 100,digits=1)
+print(wakedur_by_durerror[,2])
 # aggretate per individual to faciltiate analyses at participant level
 d_expl_BMI_auc = aggregate(modeldata,by = list(modeldata$id),mean)
+
+
+tmp = d_expl_BMI_auc[,which(colnames(d_expl_BMI_auc) %in% c("age","BMI","","durerror_l5hr6","durerror_hdcza")== TRUE)]
+print(dim(d_expl_BMI_auc[complete.cases(tmp),]))
+
 print("Regression modelling")
 for (domodel in c("hdcza","l5hr6")) {    # c("hdcza","l5hr6")
   print("-----------------------------------")
@@ -275,8 +266,14 @@ for (domodel in c("hdcza","l5hr6")) {    # c("hdcza","l5hr6")
     se[3] = se[3] * 10
     se[4] = se[4] * 5
     se = round(se,digits=ndigits)
-    tmp = paste(tmp,"(",se,")",sep="")
     
+    pvalues = summary(x)$tTable[,5]
+    pvalueschar = rep("",length(pvalues))
+    if (length(which(pvalues < 0.0005)) > 0) pvalueschar[which(pvalues < 0.0005)] = "**"
+    if (length(which(pvalues < 0.005 & pvalues >= 0.0005)) > 0) pvalueschar[which(pvalues < 0.005 & pvalues >= 0.0005)] = "*"
+    if (length(which(pvalues >= .005)) > 0) pvalueschar[which(pvalues >= 0.005)] = paste0("P=",round(pvalues[which(pvalues >= .005)],digits=2))
+
+    tmp = paste(tmp," (",se,") ",pvalueschar,sep="")
     tmp = c(tmp,round(as.numeric(VarCorr(x)[4,2])*60,digits=ndigits))
     tmp = c(tmp,round(as.numeric(VarCorr(x)[5,2])*60,digits=ndigits))
     return(tmp)
@@ -298,9 +295,9 @@ for (domodel in c("hdcza","l5hr6")) {    # c("hdcza","l5hr6")
     sderror_wake = sd(modeldata$wakeerror_l5hr6)
     sderror_onset = sd(modeldata$onseterror_l5hr6)
   }
-  outputmatrix[matrixpos,] = c(getcoef(fit.dur,ndigits),summary(fit.dur)$AIC) # sderror_dur * 60)
-  outputmatrix[matrixpos+3,] = c(getcoef(fit.wake,ndigits),summary(fit.wake)$AIC) #,sderror_wake * 60)
-  outputmatrix[matrixpos+6,] = c(getcoef(fit.onset,ndigits),summary(fit.onset)$AIC) #,sderror_onset * 60)
+  TABLE2[matrixpos,] = c(getcoef(fit.dur,ndigits),summary(fit.dur)$AIC) 
+  TABLE2[matrixpos+3,] = c(getcoef(fit.wake,ndigits),summary(fit.wake)$AIC) 
+  TABLE2[matrixpos+6,] = c(getcoef(fit.onset,ndigits),summary(fit.onset)$AIC)
   
   printsum2 = function(x,ndigits) {
     print(paste0("SD between", round(as.numeric(VarCorr(x)[4,2])*60,digits=ndigits)))
@@ -338,10 +335,10 @@ char_of_finalsample = d_expl_BMI_auc[which(is.na(d_expl_BMI_auc$age) == FALSE & 
 ##=====================================
 ## TABLE 2
 # reorder matrix because that is how we now format the table for the paper
-outputmatrix = t(outputmatrix)[,c(8,5,2,1,9,6,3)]
-outputmatrix[7:8,] = outputmatrix[8:7,]
-outputmatrix[9,] = round(as.numeric(outputmatrix[9,]))
-write.csv(outputmatrix,file="/media/vincent/Exeter/table_2.csv",row.names = FALSE)
+TABLE2 = t(TABLE2)[,c(8,5,2,1,9,6,3)]
+TABLE2[7:8,] = TABLE2[8:7,]
+TABLE2[9,] = round(as.numeric(TABLE2[9,]))
+write.csv(TABLE2,file="/media/vincent/Exeter/table_2.csv",row.names = FALSE)
 
 ##=====================================
 ## TABLE 3
@@ -370,13 +367,13 @@ TABLE3[2,1] = round(mean(modeldata_mae$onseterror_hdcza_abs) * 60,digits=1)
 TABLE3 = filltable3(rowid=3,colids=1:3,T3_wake_hdcza,TABLE3)
 TABLE3[4,1] = round(mean(modeldata_mae$wakeerror_hdcza_abs) * 60,digits=1)
 TABLE3 = filltable3(rowid=5,colids=1:3,T3_dur_hdcza,TABLE3)
-TABLE3[6,1] = round(mean(modeldata_mae$durerror_hdcza) * 60,digits=1)
+TABLE3[6,1] = round(mean(abs(modeldata_mae$durerror_hdcza)) * 60,digits=1)
 TABLE3 = filltable3(rowid=1,colids=4:6,T3_onset_l5hr6,TABLE3)
 TABLE3[2,4] = round(mean(modeldata_mae$onseterror_l5hr6_abs) * 60,digits=1)
 TABLE3 = filltable3(rowid=3,colids=4:6,T3_wake_l5hr6,TABLE3)
 TABLE3[4,4] = round(mean(modeldata_mae$wakeerror_l5hr6_abs) * 60,digits=1)
 TABLE3 = filltable3(rowid=5,colids=4:6,T3_dur_l5hr6,TABLE3)
-TABLE3[6,4] = round(mean(modeldata_mae$durerror_l5hr6) * 60,digits=1)
+TABLE3[6,4] = round(mean(abs(modeldata_mae$durerror_l5hr6)) * 60,digits=1)
 if (include_auc_calculation == TRUE) {
   qqauc = round(quantile(modeldata_mae$auc_hdcza,probs = c(0.25,0.75)),digits=2)
   TABLE3[7,1] = paste0(round(mean(modeldata_mae$auc_hdcza),digits=2)," (IQR: ",qqauc[1]," = ",qqauc[2],")")
