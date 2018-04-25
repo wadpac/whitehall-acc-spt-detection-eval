@@ -10,7 +10,10 @@ for (i in 1:30) {
   A[i+1,3] = round(runif(n = 1,min = 15,max= 45),digits=0)
   A[i+1,4] = round(runif(n = 1,min = 30,max= 90),digits=0)
 }
-plotname = c("whitehall","psgncl_left","psgncl_right","penn","combined")
+
+overview = 1:31
+
+plotname = c("Whitehall II","Newcastle Left","Newcastle Right","Pennsylvania","combined")
 for (ploti in 1:5) {
   if (ploti == 1) {
     senan_out = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
@@ -37,14 +40,16 @@ for (ploti in 1:5) {
   senan_out = cbind(senan_out,A)
   colnames(senan_out) = c("id","MAE","percentage","threshold","shortW","longW")
   
-  NAi = which(is.na(senan_out$MAE) == TRUE)
-  if (length(NAi) > 0) senan_out$MAE[NAi] = 0
-  
-  
+  # NAi = which(is.na(senan_out$MAE) == TRUE)
+  # if (length(NAi) > 0) senan_out$MAE[NAi] = 0
   
   senan_out$percentage= senan_out$percentage*100
   senan_out = senan_out[order(senan_out$MAE),]
   default = which(senan_out$id == 0)
+
+  
+  senan_out$ranking = 1:31
+  
   CXD = 2
   CXA = 1.8
   
@@ -54,7 +59,8 @@ for (ploti in 1:5) {
   maxy = ceiling(max(senan_out$MAE)/10)*10
   # Ngroups = floor(abs(diff(range(senan_out$MAE))) / 10)
   YY = seq(miny,maxy,by=round((maxy-miny)/5))
-  plot(0:30,senan_out$MAE,type="p",pch=20,axes=FALSE,xlab="",ylab="MAE (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
+  plot(0:30,senan_out$MAE,type="p",pch=20,axes=FALSE,xlab="",ylab="MAE (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA,
+       main=plotname[ploti])
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
   axis(side = 1,at = 0:30,labels = senan_out$id,tick = TRUE,las=2)
   lines(default-1,senan_out$MAE[default],type="p",pch=20,col="red",cex=CXD)
@@ -86,4 +92,25 @@ for (ploti in 1:5) {
   grid()
   
   dev.off()
+  
+  if (ploti == 1) {
+    SWH = senan_out[order(senan_out$id),]
+  } else if (ploti == 2) {
+    SNL = senan_out[order(senan_out$id),]
+  } else if (ploti == 3) {
+    SNR = senan_out[order(senan_out$id),]
+  } else if (ploti == 4) {
+    SPE = senan_out[order(senan_out$id),]
+  }
 }
+
+RM = rowMeans(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE),dims=1)
+RSD = rowMeans(abs(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE)-RM),dims=1)
+
+png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_aggregated.jpg"),
+    width = 5,height=5,units = "in",res = 600)
+par(mar=c(5,5,3,2),font.lab=2)
+plot(RSD[1:31],RM[1:31],pch=20,type="p",xlab="std. dev. in MAE across studies (minutes)",
+     ylab="mean MAE across studies (minutes)",cex=1,bty="n")
+lines(RSD[1],RM[1],pch=1,type="p",col="red",cex=1.5,lwd=2)
+dev.off()
