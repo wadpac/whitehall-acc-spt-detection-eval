@@ -19,12 +19,15 @@ path_l5hr6 = paste0(datapath,"/analysis_logFALSE_defnocempty")
 # path to demographic data file
 path_demogra = "/media/vincent/Exeter/whitehall_pp_characteristics.csv"
 # whether or not to do the auc calculation (can take 5 mintues)
-include_auc_calculation = TRUE
+include_auc_calculation = FALSE
 
 # Disclaimer: The term timeined bed is used in this script, which actually refers to the SPT-window
 #=================================
 # load the data
+# For main analysis (default parameter setting)
 Dhdcza = read.csv(paste0(path_hdcza,"/part4_nightsummary_sleep_cleaned.csv"))
+# For sensitivity analysis:
+# Dhdcza = read.csv("/media/vincent/Exeter/whitehall_sensitivity/output_whitehallsensitivity/results/part4_nightsummary_sleep_cleaned_id8.csv")
 Dlogaided = read.csv(paste0(path_logaided,"/part4_nightsummary_sleep_cleaned.csv"))
 Dl5hr6 = read.csv(paste0(path_l5hr6,"/part4_nightsummary_sleep_cleaned.csv"))
 # load particpant demographical information
@@ -102,6 +105,11 @@ data = data.frame(id = D$id, night=D$night,
                   durerror_hdcza = D$acc_timeinbed - D$sleeplog_timeinbed.logaided,
                   wakeerror_hdcza = D$acc_wake - D$sleeplog_wake.logaided,
                   onseterror_hdcza = D$acc_onset -  D$sleeplog_onset.logaided,
+                  
+                  durerror_logaided = D$acc_timeinbed.logaided - D$sleeplog_timeinbed.logaided,
+                  wakeerror_logaided = D$acc_wake.logaided - D$sleeplog_wake.logaided,
+                  onseterror_logaided = D$acc_onset.logaided -  D$sleeplog_onset.logaided,
+                  
                   weekhalf = D$weekhalf,season = D$season,
 
                   dur_l5hr6 = D$acc_timeinbed.l5hr6, dur_hdcza = D$acc_timeinbed, dur_logaided = D$sleeplog_timeinbed.logaided, 
@@ -141,10 +149,13 @@ correct_morethan_24 = function(x) {
 }
 modeldata$onseterror_hdcza = correct_morethan_24(modeldata$onseterror_hdcza)
 modeldata$onseterror_l5hr6 = correct_morethan_24(modeldata$onseterror_l5hr6)
+modeldata$onseterror_logaided = correct_morethan_24(modeldata$onseterror_logaided)
 modeldata$wakeerror_hdcza = correct_morethan_24(modeldata$wakeerror_hdcza)
 modeldata$wakeerror_l5hr6 = correct_morethan_24(modeldata$wakeerror_l5hr6)
+modeldata$wakeerror_logaided = correct_morethan_24(modeldata$wakeerror_logaided)
 modeldata$durerror_hdcza = correct_morethan_24(modeldata$durerror_hdcza)
 modeldata$durerror_l5hr6 = correct_morethan_24(modeldata$durerror_l5hr6)
+modeldata$durerror_logaided = correct_morethan_24(modeldata$durerror_logaided)
 
 
 if (include_auc_calculation == TRUE) {
@@ -317,18 +328,28 @@ for (domodel in c("hdcza","l5hr6")) {    # c("hdcza","l5hr6")
   printsum2(fit.onset,ndigits)
 }
 
+
 # Calculate MAE to facilitate some comparison with O'Donnell 2018
 modeldata$wakeerror_hdcza_abs = abs(modeldata$wakeerror_hdcza) # calculate absolute error in wake time per night
 modeldata$onseterror_hdcza_abs = abs(modeldata$onseterror_hdcza) # calculate absolute error in onset time per night
 modeldata_mae = aggregate(modeldata,by = list(modeldata$id),mean) # aggregate both wake and onset per person
-MAE = round(mean(c(modeldata$wakeerror_hdcza_abs,modeldata$onseterror_hdcza_abs)),digits=3) # calcualte mean acros individuals.
-print(paste0("MAE hdcza = ", MAE * 60))
+MAE = round(mean(c(modeldata_mae$wakeerror_hdcza_abs,modeldata_mae$onseterror_hdcza_abs)),digits=1) # calcualte mean acros individuals.
+MAEIQR = round(quantile(rowMeans(cbind(modeldata_mae$wakeerror_hdcza_abs,modeldata_mae$onseterror_hdcza_abs)),probs=c(0.25,0.75)) * 60, digits=1) # calcualte mean acros individuals.
+print(paste0("MAE hdcza = ", MAE * 60," IQR:",MAEIQR[1]," ",MAEIQR[2]))
 
 modeldata$wakeerror_l5hr6_abs = abs(modeldata$wakeerror_l5hr6) # calculate absolute error in wake time per night
 modeldata$onseterror_l5hr6_abs = abs(modeldata$onseterror_l5hr6) # calculate absolute error in onset time per night
 modeldata_mae = aggregate(modeldata,by = list(modeldata$id),mean) # aggregate both wake and onset per person
-MAE = round(mean(c(modeldata$wakeerror_l5hr6_abs,modeldata$onseterror_l5hr6_abs)),digits=3) # calcualte mean acros individuals.
-print(paste0("MAE l5hr6 = ", MAE * 60))
+MAE = round(mean(c(modeldata_mae$wakeerror_l5hr6_abs,modeldata_mae$onseterror_l5hr6_abs)),digits=1) # calcualte mean acros individuals.
+MAEIQR = round(quantile(rowMeans(cbind(modeldata_mae$wakeerror_l5hr6_abs,modeldata_mae$onseterror_l5hr6_abs)),probs=c(0.25,0.75)) * 60, digits=1) # calcualte mean acros individuals.
+print(paste0("MAE l5hr6 = ", MAE * 60," IQR:",MAEIQR[1]," ",MAEIQR[2]))
+
+modeldata$wakeerror_logaided_abs = abs(modeldata$wakeerror_logaided) # calculate absolute error in wake time per night
+modeldata$onseterror_logaided_abs = abs(modeldata$onseterror_logaided) # calculate absolute error in onset time per night
+modeldata_mae = aggregate(modeldata,by = list(modeldata$id),mean) # aggregate both wake and onset per person
+MAE = round(mean(c(modeldata$wakeerror_logaided_abs,modeldata$onseterror_logaided_abs)),digits=1) # calcualte mean acros individuals.
+MAEIQR = round(quantile(rowMeans(cbind(modeldata_mae$wakeerror_logaided_abs,modeldata_mae$onseterror_logaided_abs)),probs=c(0.25,0.75)) * 60,digits=1) # calcualte mean acros individuals.
+print(paste0("MAE logaided = ", MAE * 60," IQR:",MAEIQR[1]," ",MAEIQR[2]))
 
 
 char_of_finalsample = d_expl_BMI_auc[which(is.na(d_expl_BMI_auc$age) == FALSE & is.na(d_expl_BMI_auc$BMI_uncorrected) == FALSE),]
