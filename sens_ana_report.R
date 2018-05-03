@@ -13,7 +13,8 @@ for (i in 1:30) {
 
 overview = 1:31
 
-plotname = c("Whitehall II","Newcastle Left","Newcastle Right","Pennsylvania","combined")
+plotname = c("Sleep diary (Whitehall II Study)","Sleep clinic PSG left wrist (Newcastle)",
+             "Sleep clinic PSG right wrist (Newcastle)","Healthy good sleepers PSG non-dominant wrist (Pennsylvania)","combined")
 for (ploti in 1:5) {
   if (ploti == 1) {
     senan_out = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
@@ -50,11 +51,13 @@ for (ploti in 1:5) {
   
   senan_out$ranking = 1:31
   
-  CXD = 2
-  CXA = 1.8
+  CXD = 3
+  CXA = 3
+  print(plotname[ploti])
   
-  png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),width = 5,height=5,units = "in",res = 600)
-  par(mfrow=c(5,1),mar=c(1.5,5,1,2.5), oma=c(0,0,1,0),font.lab = 2,cex.axis=0.8,las=2)
+  png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),
+      width = 7,height=7,units = "in",res = 600)
+  par(mfrow=c(5,1),mar=c(1.5,5,1,2.5), oma=c(0,0,1,0),font.lab = 2,cex.axis=1.2,las=2,cex.main=1.5,cex.lab=1.5)
   miny = floor(min(senan_out$MAE)/10)*10
   maxy = ceiling(max(senan_out$MAE)/10)*10
   # Ngroups = floor(abs(diff(range(senan_out$MAE))) / 10)
@@ -63,32 +66,34 @@ for (ploti in 1:5) {
        main=plotname[ploti])
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
   axis(side = 1,at = 0:30,labels = senan_out$id,tick = TRUE,las=2)
-  lines(default-1,senan_out$MAE[default],type="p",pch=20,col="red",cex=CXD)
+  lines(default-1,senan_out$MAE[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
+  print(range(senan_out$MAE[1:default]))
   grid()
   
   YY = seq(0.05,0.15,by=0.05) * 100
   plot(0:30,senan_out$percentage,type="p",pch=20,axes=FALSE,xlab="",ylab="percentile",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
-  lines(default-1,senan_out$percentage[default],type="p",pch=20,col="red",cex=CXD)
+  lines(default-1,senan_out$percentage[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
   grid()
   
   YY = seq(10,20,by=5)
   plot(0:30,senan_out$threshold,type="p",pch=20,axes=FALSE,xlab="",ylab="threshold",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
-  lines(default-1,senan_out$threshold[default],type="p",pch=20,col="red",cex=CXD)
+  lines(default-1,senan_out$threshold[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
   grid()
   
   
   YY = seq(15,45,by=15)
   plot(0:30,senan_out$shortW,type="p",pch=20,axes=FALSE,xlab="",ylab="short block (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
-  lines(default-1,senan_out$shortW[default],type="p",pch=20,col="red",cex=CXD)
+  # lines(default-1,senan_out$shortW[default],type="p",pch=20,col="red",cex=CXD)
+  lines(default-1,senan_out$shortW[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
   grid()
   
   YY = seq(30,90,by=15)
   plot(0:30,senan_out$longW,type="p",pch=20,axes=FALSE,xlab="",ylab="long block (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
-  lines(default-1,senan_out$longW[default],type="p",pch=20,col="red",cex=CXD)
+  lines(default-1,senan_out$longW[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
   grid()
   
   dev.off()
@@ -108,9 +113,21 @@ RM = rowMeans(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE),dims=1)
 RSD = rowMeans(abs(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE)-RM),dims=1)
 
 png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_aggregated.jpg"),
-    width = 5,height=5,units = "in",res = 600)
+    width = 7,height=7,units = "in",res = 600)
 par(mar=c(5,5,3,2),font.lab=2)
 plot(RSD[1:31],RM[1:31],pch=20,type="p",xlab="std. dev. in MAE across studies (minutes)",
-     ylab="mean MAE across studies (minutes)",cex=1,bty="n")
-lines(RSD[1],RM[1],pch=1,type="p",col="red",cex=1.5,lwd=2)
+     ylab="mean MAE across studies (minutes)",cex=2,bty="n",cex.lab=1.4,cex.axis=1.2)
+lines(RSD[1],RM[1],pch=1,type="p",col="red",cex=3,lwd=2.5)
+txtx = RSD
+txty = RM + 1
+txtx[6] = txtx[6] - 0.1
+txty[6] = txty[6] - 0.2
+txtx[25] = txtx[25] - 0.1
+txty[25] = txty[25] - 0.2
+txtx[31] = txtx[31] + 0.2
+txty[31] = txty[31] - 0.2
+text(txtx,txty, SNR$id,cex = 0.8)
 dev.off()
+
+
+
