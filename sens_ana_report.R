@@ -1,3 +1,4 @@
+# Sensitivity analysis STEP 3
 rm(list=ls())
 graphics.off()
 set.seed(300)
@@ -13,27 +14,28 @@ for (i in 1:30) {
 
 overview = 1:31
 
+path_sens = "/media/vincent/Exeter/whitehall_sensitivity"
+
 plotname = c("Sleep diary (Whitehall II Study)","Sleep clinic PSG left wrist (Newcastle)",
              "Sleep clinic PSG right wrist (Newcastle)","Healthy good sleepers PSG non-dominant wrist (Pennsylvania)","combined")
 for (ploti in 1:5) {
   if (ploti == 1) {
-    senan_out = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
+    senan_out = read.csv(paste0(path_sens,"/sensitivity_output.csv"))
     senan_out[,2] = senan_out[,2] * 60
-    
   } else if (ploti == 2 | ploti == 3) { 
-    senan_out = read.csv("/media/vincent/Exeter/psg_newcastle_sensitivity_analysis.csv")
+    senan_out = read.csv(paste0(path_sens,"/psg_newcastle_sensitivity_analysis.csv"))
     
     senan_out[,2] = senan_out[,ploti]
     senan_out =  senan_out[,-3]
   } else if (ploti == 4) { 
-    senan_out = read.csv("/media/vincent/Exeter/psg_penn_sensitivity_analysis.csv")
+    senan_out = read.csv(paste0(path_sens,"/psg_penn_sensitivity_analysis.csv"))
   } else if (ploti == 5) { 
-    whiteh = read.csv("/media/vincent/Exeter/sensitivity_output.csv")
+    whiteh = read.csv(paste0(path_sens,"/sensitivity_output.csv"))
     whiteh[,2] = whiteh[,2] * 60
-    nclpsg = read.csv("/media/vincent/Exeter/psg_newcastle_sensitivity_analysis.csv")
+    nclpsg = read.csv(paste0(path_sens,"/psg_newcastle_sensitivity_analysis.csv"))
     nclpsg[,2] = (nclpsg[,2] + nclpsg[,3]) / 2
     nclpsg = nclpsg[,-3]
-    pennpsg = read.csv("/media/vincent/Exeter/psg_penn_sensitivity_analysis.csv")
+    pennpsg = read.csv(paste0(path_sens,"/psg_penn_sensitivity_analysis.csv"))
     senan_out = pennpsg
     senan_out[,2] = (whiteh[,2] + nclpsg[,2] + pennpsg[,2]) / 3
   }
@@ -54,15 +56,20 @@ for (ploti in 1:5) {
   CXD = 3
   CXA = 3
   print(plotname[ploti])
-  
-  png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),
+  ZZ = c(0.95,1.05)
+  png(filename = paste0(path_sens,"/images/sensitivityanalysis_hdcza_parameters_",plotname[ploti],".jpg"),
       width = 7,height=7,units = "in",res = 600)
   par(mfrow=c(5,1),mar=c(1.5,5,1,2.5), oma=c(0,0,1,0),font.lab = 2,cex.axis=1.2,las=2,cex.main=1.5,cex.lab=1.5)
   miny = floor(min(senan_out$MAE)/10)*10
   maxy = ceiling(max(senan_out$MAE)/10)*10
+  
   # Ngroups = floor(abs(diff(range(senan_out$MAE))) / 10)
   YY = seq(miny,maxy,by=round((maxy-miny)/5))
-  plot(0:30,senan_out$MAE,type="p",pch=20,axes=FALSE,xlab="",ylab="MAE (min)",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA,
+  # if ((maxy - miny) > sd(senan_out$MAE) * 2) {
+  #   YY = c(34.5, 35, 35.5)
+  #   ZZ = c(0.99,1.01)
+  # }
+  plot(0:30,senan_out$MAE,type="p",pch=20,axes=FALSE,xlab="",ylab="MAE (min)",bty="l",ylim=range(YY)*ZZ,cex=CXA,
        main=plotname[ploti])
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
   axis(side = 1,at = 0:30,labels = senan_out$id,tick = TRUE,las=2)
@@ -71,7 +78,7 @@ for (ploti in 1:5) {
   grid()
   
   YY = seq(0.05,0.15,by=0.05) * 100
-  plot(0:30,senan_out$percentage,type="p",pch=20,axes=FALSE,xlab="",ylab="percentile",bty="l",ylim=range(YY)*c(0.95,1.05),cex=CXA)
+  plot(0:30,senan_out$percentage,type="p",pch=20,axes=FALSE,xlab="",ylab="percentile",bty="l",ylim=range(YY)*ZZ,cex=CXA)
   axis(side = 2,at = YY,labels = YY,tick = TRUE)
   lines(default-1,senan_out$percentage[default],type="p",pch=1,col="red",cex=CXD*1.5,lwd=2)
   grid()
@@ -112,7 +119,7 @@ for (ploti in 1:5) {
 RM = rowMeans(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE),dims=1)
 RSD = rowMeans(abs(cbind(SWH$MAE,SNL$MAE,SNR$MAE,SPE$MAE)-RM),dims=1)
 
-png(filename = paste0("/media/vincent/Exeter/whitehall_sensitivity/images/sensitivityanalysis_hdcza_parameters_aggregated.jpg"),
+png(filename = paste0(path_sens,"/images/sensitivityanalysis_hdcza_parameters_aggregated.jpg"),
     width = 7,height=7,units = "in",res = 600)
 par(mar=c(5,5,3,2),font.lab=2)
 plot(RSD[1:31],RM[1:31],pch=20,type="p",xlab="std. dev. in MAE across studies (minutes)",
@@ -120,12 +127,14 @@ plot(RSD[1:31],RM[1:31],pch=20,type="p",xlab="std. dev. in MAE across studies (m
 lines(RSD[1],RM[1],pch=1,type="p",col="red",cex=3,lwd=2.5)
 txtx = RSD
 txty = RM + 1
-txtx[6] = txtx[6] - 0.1
-txty[6] = txty[6] - 0.2
-txtx[25] = txtx[25] - 0.1
+# txtx[6] = txtx[6] + 0.1
+# txty[6] = txty[6] - 0.2
+txtx[19] = txtx[19] + 0.1
+
+txtx[25] = txtx[25] - 0.2
 txty[25] = txty[25] - 0.2
 txtx[31] = txtx[31] + 0.2
-txty[31] = txty[31] - 0.2
+txty[31] = txty[31] - 0.3
 text(txtx,txty, SNR$id,cex = 0.8)
 dev.off()
 

@@ -1,3 +1,4 @@
+# Sensitivity analysis STEP 1
 rm(list=ls())
 pathM = "/media/vincent/Exeter/whitehall_sensitivity/output_whitehallsensitivity/meta"
 pathR = "/media/vincent/Exeter/whitehall_sensitivity/output_whitehallsensitivity/results"
@@ -15,9 +16,8 @@ D = sapply(foldernames,FUN=extract_i_id)
 FS = data.frame(id=as.numeric(unlist(D)),foldername=names(D))
 FS = FS[-which(FS$id == -1),]
 FS$foldername = as.character(unlist(strsplit(as.character(FS$foldername),"[.]id")))
-
-FS = FS[-which(FS$id >= 0 &
-                 FS$id <= 6 | FS$id >= 8),]
+# FS = FS[-which(FS$id >= 0 &
+#                  FS$id <= 6 | FS$id >= 8),]
 
 FS = FS[order(FS$id),]
 
@@ -45,7 +45,7 @@ for (i in 1:nrow(FS)) {
                studyname="whitehallsensitivity", #specify above
                f0=c(), #specify above
                f1=c(), #specify above
-               overwrite = FALSE, #overwrite previous milestone data?
+               overwrite = TRUE, #overwrite previous milestone data?
                do.imp=TRUE, # Do imputation? (recommended)
                idloc=2, #id location (1 = file header, 2 = filename)Rcpp::
                print.filename=TRUE,
