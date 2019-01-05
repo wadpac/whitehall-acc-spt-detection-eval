@@ -50,7 +50,7 @@ g.shell.GGIR(#=======================================
              f1=f1, #specify above
              overwrite = FALSE, #overwrite previous milestone data?
              do.imp=TRUE, # Do imputation? (recommended)
-             idloc=2, #id location (1 = file header, 2 = filename)Rcpp::
+             idloc=2, #id location (1 = file header, 2 = filename)
              print.filename=TRUE,
              storefolderstructure = TRUE,
              #-------------------------------
@@ -82,7 +82,7 @@ g.shell.GGIR(#=======================================
              hrs.del.end = 0, # Only relevant when strategy = 2. How many HOURS need to be ignored at the END of the measurement?
              maxdur = 9, # How many DAYS of measurement do you maximumally expect?
              includedaycrit = 16, # number of minimum valid hours in a day to attempt physical activity analysis
-             L5M5window = c(0,24), #window over which to calculate L5 and M5
+             #L5M5window = c(0,24), #window over which to calculate L5 and M5
              M5L5res = 10, #resolution in minutes of M5 and L5 calculation
              winhr = c(5,10), # size of M5 and L5 (5 hours by default)
 
