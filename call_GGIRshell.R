@@ -61,14 +61,14 @@ g.shell.GGIR(#=======================================
              do.cal= TRUE, # Apply autocalibration? (recommended)
              do.enmo = TRUE, #Needed for physical activity analysis
              do.anglez=TRUE, #Needed for sleep detection
-      	     do.angley=TRUE,
-             do.anglex=TRUE,
-             do.roll_med_acc_x=TRUE,
-             do.roll_med_acc_y=TRUE,
-             do.roll_med_acc_z=TRUE,
-             do.dev_roll_med_acc_x=TRUE,
-             do.dev_roll_med_acc_y=TRUE,
-             do.dev_roll_med_acc_z=TRUE,
+      	     #do.angley=TRUE,
+             #do.anglex=TRUE,
+             #do.roll_med_acc_x=TRUE,
+             #do.roll_med_acc_y=TRUE,
+             #do.roll_med_acc_z=TRUE,
+             #do.dev_roll_med_acc_x=TRUE,
+             #do.dev_roll_med_acc_y=TRUE,
+             #do.dev_roll_med_acc_z=TRUE,
 
              chunksize=1, #size of data chunks to be read (value = 1 is maximum)
              printsummary=TRUE,
@@ -85,7 +85,7 @@ g.shell.GGIR(#=======================================
              L5M5window = c(0,24), #window over which to calculate L5 and M5
              M5L5res = 10, #resolution in minutes of M5 and L5 calculation
              winhr = c(5,10), # size of M5 and L5 (5 hours by default)
-             
+
 qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c() if you do not want quantiles
              qwindow=c(0,24), #window over which to calculate quantiles
              ilevels = c(seq(0,400,by=50),8000), #acceleration values (metric ENMO) from which a frequency distribution needs to be derived, set value at c() if you do not want quantiles
