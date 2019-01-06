@@ -89,6 +89,7 @@ g.shell.GGIR(#=======================================
 qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c() if you do not want quantiles
              qwindow=c(0,24), #window over which to calculate quantiles
              ilevels = c(seq(0,400,by=50),8000), #acceleration values (metric ENMO) from which a frequency distribution needs to be derived, set value at c() if you do not want quantiles
+             iglevels = TRUE, # intensitygradient levels
              mvpathreshold =c(100,120), #MVPA (moderate and vigorous physical activity threshold
              bout.metric = 4,
              closedbout=FALSE,
