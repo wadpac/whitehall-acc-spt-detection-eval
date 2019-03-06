@@ -12,7 +12,7 @@ if(length(args) > 0) {
 #==================================================================
 # INPUT NEEDED:
 # specify file number to start and end with, fill in c() if unknown
-mode= c(1) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
+mode= c(3) #What part of the analysis needs to be done (options: 1,2,3,4 and 5)
 # specifiy the location of the config file:
 config = read.csv("~/whitehall-acc/config.txt",row.names = 1,stringsAsFactors = FALSE,sep = ",",strip.white = TRUE)
 datadir = config$datadir
@@ -82,7 +82,6 @@ g.shell.GGIR(#=======================================
              hrs.del.end = 0, # Only relevant when strategy = 2. How many HOURS need to be ignored at the END of the measurement?
              maxdur = 9, # How many DAYS of measurement do you maximumally expect?
              includedaycrit = 16, # number of minimum valid hours in a day to attempt physical activity analysis
-             #L5M5window = c(0,24), #window over which to calculate L5 and M5
              M5L5res = 10, #resolution in minutes of M5 and L5 calculation
              winhr = c(5,10), # size of M5 and L5 (5 hours by default)
 
@@ -136,6 +135,11 @@ qlevels = c(c(1380/1440),c(1410/1440)), #quantiles to calculate, set value at c(
              boutdur.lig = c(1,10), # duration of bouts to be calculated
              boutdur.mvpa = c(1,10), # duration of bouts to be calculated
              timewindow = c("WW","MM"), #,
+	     do.LIDS = TRUE,
+	     LIDS2csv = TRUE,
+	     LIDS_cosfit_periods = seq(30,180, by =5),
+	     nonstationary = FALSE,
+	     WakeBouteMin = 30, SleepBoutMin = 180,
              #-----------------------------------
              # Report generation
              #-------------------------------
